@@ -82,53 +82,96 @@ class Program
     public function UpdateQuality()
     {
         foreach ($this->items as $currentItem) {
-            if ($currentItem->name != "Aged Brie" && $currentItem->name != "Backstage passes to a TAFKAL80ETC concert") {
-                if ($currentItem->quality > 0) {
-                    if ($currentItem->name != "Sulfuras, Hand of Ragnaros") {
-                        $currentItem->quality = $currentItem->quality - 1;
-                    }
-                }
-            } else {
-                if ($currentItem->quality < 50) {
-                    $currentItem->quality = $currentItem->quality + 1;
+            $this->updateItemQuality($currentItem);
+        }
+    }
 
-                    if ($currentItem->name == "Backstage passes to a TAFKAL80ETC concert") {
-                        if ($currentItem->sellIn < 11) {
-                            if ($currentItem->quality < 50) {
-                                $currentItem->quality = $currentItem->quality + 1;
-                            }
-                        }
-
-                        if ($currentItem->sellIn < 6) {
-                            if ($currentItem->quality < 50) {
-                                $currentItem->quality = $currentItem->quality + 1;
-                            }
-                        }
-                    }
-                }
+    private function updateItemQuality($currentItem)
+    {
+        if (!$this->isAgedBrie($currentItem) && !$this->isBackStagePass($currentItem)) {
+            if ($this->canDecreaseQuality($currentItem) && !$this->isSulfurasHandOfRagnaros($currentItem)) {
+                $this->decreaseItemQuality($currentItem);
             }
+        } else {
+            if ($this->canIncreaseItemQuality($currentItem)) {
+                $this->increaseItemQuality($currentItem);
 
-            if ($currentItem->name != "Sulfuras, Hand of Ragnaros") {
-                $currentItem->sellIn = $currentItem->sellIn - 1;
-            }
-
-            if ($currentItem->sellIn < 0) {
-                if ($currentItem->name != "Aged Brie") {
-                    if ($currentItem->name != "Backstage passes to a TAFKAL80ETC concert") {
-                        if ($currentItem->quality > 0) {
-                            if ($currentItem->name != "Sulfuras, Hand of Ragnaros") {
-                                $currentItem->quality = $currentItem->quality - 1;
-                            }
+                if ($this->isBackStagePass($currentItem)) {
+                    if ($currentItem->sellIn < 11) {
+                        if ($this->canIncreaseItemQuality($currentItem)) {
+                            $this->increaseItemQuality($currentItem);
                         }
-                    } else {
-                        $currentItem->quality = $currentItem->quality - $currentItem->quality;
                     }
-                } else {
-                    if ($currentItem->quality < 50) {
-                        $currentItem->quality = $currentItem->quality + 1;
+
+                    if ($currentItem->sellIn < 6) {
+                        if ($this->canIncreaseItemQuality($currentItem)) {
+                            $this->increaseItemQuality($currentItem);
+                        }
                     }
                 }
             }
         }
+
+        if (!$this->isSulfurasHandOfRagnaros($currentItem)) {
+            $currentItem->sellIn = $currentItem->sellIn - 1;
+        }
+
+        if ($currentItem->sellIn < 0) {
+            if (!$this->isAgedBrie($currentItem)) {
+                if (!$this->isBackStagePass($currentItem)) {
+                    if ($this->canDecreaseQuality($currentItem)) {
+                        if (!$this->isSulfurasHandOfRagnaros($currentItem)) {
+                            $this->decreaseItemQuality($currentItem);
+                        }
+                    }
+                } else {
+                    $this->resetItemQuality($currentItem);
+                }
+            } else {
+                if ($this->canIncreaseItemQuality($currentItem)) {
+                    $this->increaseItemQuality($currentItem);
+                }
+            }
+        }
+    }
+
+    private function isAgedBrie($currentItem)
+    {
+        return $currentItem->name == "Aged Brie";
+    }
+
+    private function isBackStagePass($currentItem)
+    {
+        return $currentItem->name == "Backstage passes to a TAFKAL80ETC concert";
+    }
+
+    private function isSulfurasHandOfRagnaros($currentItem)
+    {
+        return $currentItem->name == "Sulfuras, Hand of Ragnaros";
+    }
+
+    private function canDecreaseQuality($currentItem)
+    {
+        return $currentItem->quality > 0;
+    }
+
+    private function decreaseItemQuality($currentItem)
+    {
+        $currentItem->quality = $currentItem->quality - 1;
+    }
+
+    private function canIncreaseItemQuality($currentItem)
+    {
+        return $currentItem->quality < 50;
+    }
+
+    private function increaseItemQuality($currentItem)
+    {
+        $currentItem->quality = $currentItem->quality + 1;
+    }
+
+    private function resetItemQuality($currentItem)
+    {
+        $currentItem->quality = 0;
     }
 }
