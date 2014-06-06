@@ -88,50 +88,20 @@ class Program
 
     private function updateItemQuality($currentItem)
     {
-        if (!$this->isAgedBrie($currentItem) && !$this->isBackStagePass($currentItem)) {
-            if ($this->canDecreaseQuality($currentItem) && !$this->isSulfurasHandOfRagnaros($currentItem)) {
-                $this->decreaseItemQuality($currentItem);
-            }
+        $this->decreaseSellInDays($currentItem);
+
+        if ($this->isItemThatIncreasesQualityWithTime($currentItem)) {
+            $this->increaseItemQuality($currentItem);
         } else {
-            if ($this->canIncreaseItemQuality($currentItem)) {
-                $this->increaseItemQuality($currentItem);
-
-                if ($this->isBackStagePass($currentItem)) {
-                    if ($currentItem->sellIn < 11) {
-                        if ($this->canIncreaseItemQuality($currentItem)) {
-                            $this->increaseItemQuality($currentItem);
-                        }
-                    }
-
-                    if ($currentItem->sellIn < 6) {
-                        if ($this->canIncreaseItemQuality($currentItem)) {
-                            $this->increaseItemQuality($currentItem);
-                        }
-                    }
-                }
-            }
+            $this->decreaseItemQuality($currentItem);
         }
 
-        if (!$this->isSulfurasHandOfRagnaros($currentItem)) {
-            $currentItem->sellIn = $currentItem->sellIn - 1;
+        if ($this->isBackStagePass($currentItem)) {
+            $this->handleBackStagePassQuality($currentItem);
         }
 
-        if ($currentItem->sellIn < 0) {
-            if (!$this->isAgedBrie($currentItem)) {
-                if (!$this->isBackStagePass($currentItem)) {
-                    if ($this->canDecreaseQuality($currentItem)) {
-                        if (!$this->isSulfurasHandOfRagnaros($currentItem)) {
-                            $this->decreaseItemQuality($currentItem);
-                        }
-                    }
-                } else {
-                    $this->resetItemQuality($currentItem);
-                }
-            } else {
-                if ($this->canIncreaseItemQuality($currentItem)) {
-                    $this->increaseItemQuality($currentItem);
-                }
-            }
+        if ($this->isItemInLastSellInDay($currentItem)) {
+            $this->handleLastDayQuality($currentItem);
         }
     }
 
@@ -150,14 +120,28 @@ class Program
         return $currentItem->name == "Sulfuras, Hand of Ragnaros";
     }
 
-    private function canDecreaseQuality($currentItem)
+    private function isConjuredItem($currentItem)
     {
-        return $currentItem->quality > 0;
+        return $currentItem->name == "Conjured";
     }
 
     private function decreaseItemQuality($currentItem)
     {
-        $currentItem->quality = $currentItem->quality - 1;
+        if ($this->canDecreaseQuality($currentItem)) {
+            $currentItem->quality = $currentItem->quality - $this->getDecreaseRateForItem($currentItem);
+        }
+    }
+
+    private function canDecreaseQuality($currentItem)
+    {
+        return $currentItem->quality > 0 && !$this->isSulfurasHandOfRagnaros($currentItem);
+    }
+
+    private function increaseItemQuality($currentItem)
+    {
+        if ($this->canIncreaseItemQuality($currentItem)) {
+            $currentItem->quality = $currentItem->quality + 1;
+        }
     }
 
     private function canIncreaseItemQuality($currentItem)
@@ -165,13 +149,61 @@ class Program
         return $currentItem->quality < 50;
     }
 
-    private function increaseItemQuality($currentItem)
-    {
-        $currentItem->quality = $currentItem->quality + 1;
-    }
-
     private function resetItemQuality($currentItem)
     {
         $currentItem->quality = 0;
+    }
+
+    private function isItemInLastSellInDay($currentItem)
+    {
+        return $currentItem->sellIn < 0;
+    }
+
+    private function decreaseSellInDays($currentItem)
+    {
+        if (!$this->isSulfurasHandOfRagnaros($currentItem)) {
+            $currentItem->sellIn = $currentItem->sellIn - 1;
+        }
+    }
+
+    private function isItemThatIncreasesQualityWithTime($currentItem)
+    {
+        return $this->isAgedBrie($currentItem) || $this->isBackStagePass($currentItem);
+    }
+
+    private function handleBackStagePassQuality($currentItem)
+    {
+        if ($currentItem->sellIn < 11) {
+            $this->increaseItemQuality($currentItem);
+        }
+        if ($currentItem->sellIn < 6) {
+            $this->increaseItemQuality($currentItem);
+        }
+    }
+
+    private function handleLastDayQuality($currentItem)
+    {
+        if ($this->isAgedBrie($currentItem)) {
+            $this->increaseItemQuality($currentItem);
+            return;
+        }
+
+        if ($this->isBackStagePass($currentItem)) {
+            $this->resetItemQuality($currentItem);
+            return;
+        }
+
+        $this->decreaseItemQuality($currentItem);
+    }
+
+    private function getDecreaseRateForItem($currentItem)
+    {
+        $decreasedDayQuality = 1;
+
+        if ($this->isConjuredItem($currentItem)) {
+            $decreasedDayQuality = 2;
+            return $decreasedDayQuality;
+        }
+        return $decreasedDayQuality;
     }
 }

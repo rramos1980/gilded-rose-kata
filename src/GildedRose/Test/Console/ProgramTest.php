@@ -35,6 +35,16 @@ class ProgramTest extends PHPUnit_Framework_TestCase
         $this->checkExpectationsForProperties($itemProperties, -2, 18);
     }
 
+
+    /**
+     * @test
+     */
+    public function conjured_item_quality_degrades_twice_faster()
+    {
+        $itemProperties = ['name' => 'Conjured', "sellIn" => 2, 'quality' => 50];
+        $this->checkExpectationsForProperties($itemProperties, 1, 48);
+    }
+
     //"Backstage passes" increases in Quality as it's SellIn value approaches; Quality increases by 2 when there are 10 days or less and by 3 when there are 5 days or less but Quality drops to 0 after the concert
 
 //    public function backstage_passes_increase_qu
